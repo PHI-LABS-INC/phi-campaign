@@ -9,6 +9,7 @@ const provider = new ethers.providers.AlchemyProvider("matic", process.env.POLYG
 const contract = new ethers.Contract(phiMapAddr, phiMapAbi, provider);
 
 const main = async () => {
+  // 1. fetch all WriteLink events during the Kakusei event
   const [start, end] = [37216128, 37739389];
   const sizeLimit = 1000;
   const eventRequests: Promise<Event[]>[] = [];
@@ -17,6 +18,7 @@ const main = async () => {
   }
   const events = (await Promise.all(eventRequests)).flat();
 
+  // 2. aggregate the events by ENS without duplicate
   const aggregateByENS: { [to: string]: { [from: string]: boolean } } = {};
   events.forEach((event) => {
     if (event?.args) {
@@ -27,6 +29,7 @@ const main = async () => {
     }
   });
 
+  // 3. sum and group them by address
   const aggregateByAddress: { [address: string]: number } = participants.reduce((prev, addr) => ({ ...prev, [addr]: 0 }), {});
   await Promise.all(
     Object.keys(aggregateByENS).map(async (ens) => {
@@ -39,6 +42,7 @@ const main = async () => {
     throw err;
   });
 
+  // 4. output the results
   const ranking = Object.keys(aggregateByAddress)
     .map((address) => ({ address, score: aggregateByAddress[address] }))
     .sort((a, b) => b.score - a.score);
