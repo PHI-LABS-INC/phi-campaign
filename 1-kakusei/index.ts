@@ -1,7 +1,7 @@
 import { ethers, Event } from "ethers";
 import { writeFile } from "node:fs/promises";
-import { getENSFromlandURL, getEnsOwner } from "./ens";
 import phiMapAbi from "./phiMapAbi";
+import { getENSFromLandURL, retry } from "./helper";
 import participants from "./participants.json" assert { type: "json" };
 
 const phiMapAddr = "0xe8b6395d223C9D3D85e162f2cb2023bC9088a908";
@@ -14,7 +14,7 @@ const main = async () => {
   const sizeLimit = 1000;
   const eventRequests: Promise<Event[]>[] = [];
   for (let i = start; i < end; i += sizeLimit) {
-    eventRequests.push(contract.queryFilter(contract.filters.WriteLink(), i, i + sizeLimit > end ? end : i + sizeLimit));
+    eventRequests.push(retry(() => contract.queryFilter(contract.filters.WriteLink(), i, i + sizeLimit > end ? end : i + sizeLimit), 3));
   }
   const events = (await Promise.all(eventRequests)).flat();
 
@@ -22,7 +22,7 @@ const main = async () => {
   const aggregateByENS: { [to: string]: { [from: string]: boolean } } = {};
   events.forEach((event) => {
     if (event?.args) {
-      const ens = getENSFromlandURL(event.args.url);
+      const ens = getENSFromLandURL(event.args.url);
       if (ens) {
         aggregateByENS[ens] = { ...aggregateByENS[ens], [event.args.name]: true };
       }
@@ -33,7 +33,7 @@ const main = async () => {
   const aggregateByAddress: { [address: string]: number } = participants.reduce((prev, addr) => ({ ...prev, [addr]: 0 }), {});
   await Promise.all(
     Object.keys(aggregateByENS).map(async (ens) => {
-      const addr = await getEnsOwner(ens);
+      const addr = (await retry<string>(() => contract.ownerOfPhiland(ens.slice(0, -4)), 3)).toLowerCase();
       if (addr && aggregateByAddress[addr] !== undefined) {
         aggregateByAddress[addr] += Object.keys(aggregateByENS[ens]).length;
       }
