@@ -1,0 +1,134 @@
+
+-------------- Lens --------------
+//// LensProfileOwner
+- QuestName: Lens Culinaris
+- Description: Lens Handle Owner
+- TokenId: 103501
+- TokenURI: https://www.arweave.net/Y3DUJhSOl9kEuXeLTz3OdTdQP_lGCzZsYhFiAAL6l3A
+- Network: Polygon
+- ContractAddress: 0xdb46d1dc155634fbc732f92e853b10b288ad5a1d
+- Method/Event: balanceOf
+- Count: 1
+
+//// LensProfileOwner
+- QuestName: BioOnLens
+- Description: Fill 'Bio' of Lens Profile
+- TokenId: 103502
+- TokenURI: https://www.arweave.net/77KoFi8-WwgtdPxqLbK8u7Kn2t_7Y-_8q7EHDpFT7qU
+- Network: Polygon
+- ContractAddress: - 
+- Method/Event: -
+- Count: 1
+- Other: Need defaultProfile set/ Use lens api
+    // const query = `
+    //     query Profile {
+    //       profile(request: { profileId: "${profileId.toHexString()}"}) {
+    //         bio
+    //       }
+    //     }
+    // `;
+    // const bio = result.data.profile.bio || "null";
+    // return bio != "null";
+    
+//// PostOnLen
+- QuestName: Lens Orientalis
+- Description: Make a post on Lenster during the Yasai event
+- TokenId: 103503
+- TokenURI: https://www.arweave.net/oNBTnYZyu_4suwjfbNfuszP2dTQhF9sUF_A1-JcEI8o
+- Network: Polygon
+- ContractAddress: 0xdb46d1dc155634fbc732f92e853b10b288ad5a1d
+- Method/Event: -
+- Count: 1
+- Other: Need defaultProfile set/ Use lens api / Need post afte 2023-02-xxT00:00:00.000Z
+  const query = `query Publications {
+    //                 publications(request: {
+    //                   profileId:"${profileId.toHexString()}",
+    //                   publicationTypes: [POST],
+    //                   limit: 10
+    //                 }) {
+    //                   items {
+    //                     ... on Post {
+    //                         id
+    //                         createdAt
+    //                     }
+    //                   }
+    //                 }
+    //               }
+    // `;
+
+//// CollectPhiPostOnLens
+- QuestName: Lens Ervoides
+- Description: Collect a Yasai-campaign post of PHI on Lenster during the Yasai event
+- TokenId: 103504
+- TokenURI: https://www.arweave.net/ucqvjAFjRuO0qiDX_vq_BVxoqp27zf36lnbHL_Zs-Lk
+- Network: Polygon
+- ContractAddress: 0xcd9ba138de38feefa2d7435563dead677f274f96 <= address will be changed after start
+- Method/Event: balanceOf
+- Count: 1
+
+//// PhiOnLens
+- QuestName: Lens Odemensis
+- Description: Update your Lens Profile's Website to Philand URL
+- TokenId: 103505
+- TokenURI: https://www.arweave.net/dTuVbsf771X1aZomSB903BQFXGdDapIKzBEPNBevHsk
+- Network: Polygon
+- ContractAddress: -
+- Method/Event: -
+- Count: -
+- Other: Need defaultProfile set/ Use lens api /
+    // const query = `
+    //     query Profile {
+    //       profile(request: { profileId: "${profileId.toHexString()}"}) {
+    //         attributes {
+    //         key
+    //         value
+    //         }
+    //       }
+    //     }
+    // `;
+    // if (attribute.key == "website") {
+    //    if (!attribute.value.includes("https://land.philand.xyz/")) return false;
+    //    if (!attribute.value.endsWith(".eth")) {
+    //      return false;
+    //    }
+    //    return true;
+    //  }
+    
+   
+//// CollectedOnLens
+- QuestName: Lens Lamottei
+- Description: Have a post on Lenster collected by other Lens profile during the Yasai event
+- TokenId: 103506
+- TokenURI: https://www.arweave.net/gwAsi8tZCv1-QHrTkRYGLrVyWRwFhUdz7dfguvjddg0
+- Network: Polygon
+- ContractAddress: - 
+- Method/Event: -
+- Count: 1
+- Other: Need defaultProfile set/ Use lens api / Need post afte 2023-02-xxT00:00:00.000Z
+    //  const query = `query Publications {
+    //                 publications(request: {
+    //                   profileId:"${profileId.toHexString()}",
+    //                   publicationTypes: [POST],
+    //                   limit: 10
+    //                 }) {
+    //                   items {
+    //                     ... on Post {
+    //                         id
+    //                         createdAt
+    //                         stats {
+    //                           totalAmountOfCollects
+    //                       }
+    //                     }
+    //                   }
+    //                 }
+    //               }
+    // `;
+    // 
+    // const query = `
+    // query WhoCollectedPublication {
+    //     whoCollectedPublication(request: { publicationId:"${pubid}" }) {
+    //     items {
+    //       address
+    //     }
+    //   }
+    // }`;
