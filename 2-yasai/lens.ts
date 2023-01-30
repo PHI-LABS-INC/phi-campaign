@@ -73,7 +73,10 @@ export const checkNFTBalance = async (
   let counter = 0;
   const contract = new ethers.Contract(contractAddress, ContractABI, provider);
   try {
-    return (counter = await contract.balanceOf(collectorAddress));
+    return (counter = await retry(
+      () => contract.balanceOf(collectorAddress),
+      3
+    ));
   } catch (e) {
     console.log('balanceOf failed', e);
     throw e;

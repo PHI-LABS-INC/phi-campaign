@@ -23,7 +23,7 @@ const main = async () => {
   await Promise.all(
     Object.keys(defaultProfile).map(async (address) => {
       const defaultProfileId = await getDefaultProfile(address);
-      if (defaultProfile) {
+      if (defaultProfileId) {
         defaultProfile[address] = defaultProfileId;
       }
     })
@@ -41,8 +41,9 @@ const main = async () => {
     },
     {}
   );
+  console.log('finish Participants-filtering by defaultProfile setting');
   console.log({ filteredParticipants });
-  // 3. fetch CollectNFTTransferred events during the Yasai event
+  // 3. Fetch CollectNFTTransferred events during the Yasai event
   const lensLPPAddr = '0xDb46d1Dc155634FbC732f92E853b10B288AD5a1d';
   const CollectNFTTransferredAbi = [
     'event CollectNFTTransferred(uint256 indexed profileId, uint256 indexed pubId, uint256 indexed collectNFTId, address from, address to, uint256 timestamp)'
@@ -52,8 +53,12 @@ const main = async () => {
     CollectNFTTransferredAbi,
     provider
   );
+
   const currentBlock = await provider.getBlockNumber();
-  const [start, end] = [37898365, currentBlock]; //Modify the start block after it has begun.
+  const [start, end] = [37898365, currentBlock]; //Modify the start block after yasai has begun.
+  console.log(
+    `start getting collectNFT event blocknumber from ${start} to ${end}`
+  );
   const sizeLimit = 1000;
   const eventRequests: Promise<Event[]>[] = [];
   for (let i = start; i < end; i += sizeLimit) {
@@ -66,25 +71,41 @@ const main = async () => {
     );
   }
   const events = (await Promise.all(eventRequests)).flat();
+  console.log(`We got the number of events:${events.length}`);
 
-  // 4. Filter the event by requiring
-  // Both the collector and the collected person are campaign participants.
+  // 4.1 Filter the event by requiring
+  // collected person is campaign participans.
   const filteredEvent = events.filter((item) => {
     return (
       item.args?.to &&
       item.args?.profileId &&
       item.args?.pubId &&
-      Object.keys(filteredParticipants).includes(item.args?.to.toLowerCase()) &&
+      // Object.keys(filteredParticipants).includes(item.args?.to.toLowerCase()) &&
       Object.values(filteredParticipants).some((val) =>
         val.eq(item.args?.profileId)
       )
     );
   });
-  console.log(filteredEvent);
-  //5.Aggregate event where the three fields, to, profileId, and pubId are duplicated.
+  console.log(`filteredEvent Count: ${filteredEvent.length}`);
+
+  // 4.2 Filter the event by requiring
+  // collector person has lens profile for avoid direct collectNFT.
+  const profileBalnceCheck = await Promise.all(
+    filteredEvent.map(async (item) => {
+      const checkProfileBalance = await checkNFTBalance(
+        item.args?.to,
+        '0xdb46d1dc155634fbc732f92e853b10b288ad5a1d'
+      );
+      return checkProfileBalance >= 1;
+    })
+  );
+  const filtered2Event = filteredEvent.filter((_, i) => profileBalnceCheck[i]);
+  console.log(`filtered2Event Count: ${filtered2Event.length}`);
+
+  //5. Aggregate event where the three fields, to, profileId, and pubId are duplicated.
   const uniqueEventData = Array.from(
     new Set(
-      filteredEvent.map((item) => {
+      filtered2Event.map((item) => {
         return {
           collector: item.args?.to,
           profileId: item.args?.profileId,
@@ -93,8 +114,9 @@ const main = async () => {
       })
     )
   );
-  console.log(uniqueEventData);
-  // 6.Verify if the address of the user (collector) who was the recipient has the collectNFT (profileId, pubId).
+  console.log(`uniqueEventData Count: ${uniqueEventData.length}`);
+
+  // 6. Verify if the address of the user (collector) who was the recipient has the collectNFT (profileId, pubId).
   const balanceCheck = await Promise.all(
     uniqueEventData.map(async (data) => {
       const nftBalance = await checkNFTBalance(
@@ -105,16 +127,34 @@ const main = async () => {
     })
   );
   const filteredNFTData = uniqueEventData.filter((_, i) => balanceCheck[i]);
-  console.log(filteredNFTData);
-  // 7.Exclude self-collections.
-  const filteredData = filteredNFTData.filter((data) => {
-    return (
-      data.profileId.toHexString() !==
-      filteredParticipants[data.collector.toLowerCase()].toHexString()
-    );
+  console.log(`filteredNFTData Count: ${filteredNFTData.length}`);
+
+  // 7. Exclude self-collections.
+  const collectedUsers: Data = uniqueEventData.reduce(
+    (prev, item) => ({ ...prev, [item.collector]: '' }),
+    {}
+  );
+
+  await Promise.all(
+    Object.keys(collectedUsers).map(async (address) => {
+      const defaultProfileId = await getDefaultProfile(address);
+      if (defaultProfileId) {
+        collectedUsers[address] = defaultProfileId;
+      }
+    })
+  ).catch((err) => {
+    throw err;
   });
 
-  //8.Prepare to measure the number of collections from unique addresses
+  const filteredData = filteredNFTData.filter((data) => {
+    return (
+      data.profileId.toHexString() !== // collected person (A)
+      collectedUsers[data.collector].toHexString() // collector =: person (B) who collect (A)
+    );
+  });
+  console.log(`filteredData Count: ${filteredData.length}`);
+
+  //8. Prepare to measure the number of collections from unique addresses
   const desiredData: UniqueRecord[] = filteredData.map((item) => ({
     collector: item.collector,
     profileId: item.profileId
@@ -129,8 +169,9 @@ const main = async () => {
       )
     )
   ].map((item) => JSON.parse(item));
+  console.log(`uniqueData Count: ${uniqueData.length}`);
 
-  // 9.Aggregated by profileId ex. { '0x010180': 2 }
+  // 9. Aggregated by profileId ex. { '0x010180': 2 }
   const countedData: CountedData = uniqueData.reduce(
     (result: CountedData, item: { profileId: string }) => {
       if (!result[item.profileId]) {
@@ -142,7 +183,7 @@ const main = async () => {
     {}
   );
   console.log(countedData);
-  // 10.Aggregated by address ex. { address: '0x5037e7747fAa78fc0ECF8DFC526DcD19f73076ce', score: 2 }
+  // 10. Aggregated by address ex. { address: '0x5037e7747fAa78fc0ECF8DFC526DcD19f73076ce', score: 2 }
   const lensScore: Score[] = Object.entries(filteredParticipants).map(
     ([address, value]) => {
       return { address, score: countedData[value.toHexString()] || 0 };
