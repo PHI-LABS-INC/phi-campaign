@@ -1,0 +1,9 @@
+*.js
+!jest.config.js
+!jest.setup.js
+*.d.ts
+node_modules
+.vscode
+.env
+encrypted
+coverage
