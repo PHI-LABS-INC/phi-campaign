@@ -55,7 +55,7 @@ const main = async () => {
   );
 
   const currentBlock = await provider.getBlockNumber();
-  const [start, end] = [37898365, currentBlock]; //Modify the start block after yasai has begun.
+  const [start, end] = [39014838, currentBlock];
   console.log(
     `start getting collectNFT event blocknumber from ${start} to ${end}`
   );
